@@ -48,15 +48,19 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   em_chat_uikit:
+    # path: ../../chat_uikit/chatuikit-flutter
     git:
       url: https://github.com/dujiepeng/chatuikit-flutter.git
-      ref: 213e65b
+      ref: be16f4e
 
 
   chatroom_uikit:
     git:
       url: https://github.com/dujiepeng/chat_room_uikit.git
-      ref: main
+      ref: cd22d48
+
+
+
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to

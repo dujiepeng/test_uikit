@@ -3,62 +3,102 @@ import 'dart:convert';
 import 'package:chatroom_uikit/chatroom_uikit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:test_uikit/demo/pages/chatroom/chatroom_user_data.dart';
 
 class ChatRoomPage extends StatefulWidget {
   const ChatRoomPage(this.room, {super.key});
+
   final ChatRoom room;
   @override
   State<ChatRoomPage> createState() => _ChatRoomPageState();
 }
 
-class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
+class _ChatRoomPageState extends State<ChatRoomPage> {
   ChatRoomInputBarController inputBarController = ChatRoomInputBarController();
+  // 发送礼物列表 使用
+  List<ChatroomGiftPageController> controllers = [];
+  String get roomId => widget.room.roomId;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setup();
-    });
+    analysisGiftList();
+    setup();
   }
 
   void setup() async {
-    try {
-      await ChatRoomUIKit.instance.joinChatRoom(roomId: widget.room.roomId);
-      debugPrint('join chat room success');
-    } catch (e) {
-      debugPrint('join chat room error: $e');
+    // 先获取自己的信息，之后再加入聊天室
+    await setupMyInfo();
+    joinChatRoom();
+  }
+
+  // 加入聊天室
+  void joinChatRoom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ChatRoomUIKit.instance
+          .joinChatRoom(roomId: roomId)
+          .then((_) {
+            debugPrint('join chat room');
+          })
+          .catchError((e) {
+            debugPrint('join chat room error: $e');
+          });
+    });
+  }
+
+  // 解析礼物列表
+  Future<void> analysisGiftList() async {
+    String giftJson = await rootBundle.loadString('data/Gifts.json');
+    Map<String, dynamic> map = json.decode(giftJson);
+    for (var element in map.keys.toList()) {
+      final controller = ChatroomGiftPageController(
+        title: element,
+        gifts: () {
+          List<ChatRoomGift> list = [];
+          map[element].forEach((element) {
+            ChatRoomGift gift = ChatRoomGift.fromJson(element);
+            list.add(gift);
+          });
+          return list;
+        }(),
+      );
+      controllers.add(controller);
     }
   }
 
+  // 设置自己在聊天室中的信息
+  Future<void> setupMyInfo() async {
+    ChatUIKitProfile profile = ChatRoomUserInfo.createUserProfile(
+      userId: ChatRoomUIKit.instance.currentUserId!,
+      nickname: '在 ${widget.room.name ?? roomId} 中的昵称',
+    );
+    ChatUIKitProvider.instance.addProfiles([profile], roomId);
+  }
+
+  // 更新自己在聊天室中的信息
+  Future<void> updateMyInfo() async {
+    ChatUIKitProfile profile = ChatRoomUserInfo.createUserProfile(
+      userId: ChatRoomUIKit.instance.currentUserId!,
+      nickname: '更新昵称',
+    );
+    ChatUIKitProvider.instance.addProfiles([profile], roomId);
+  }
+
   @override
-  Widget themeBuilder(BuildContext context, ChatUIKitTheme theme) {
+  Widget build(BuildContext context) {
     Widget content = Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         actions: [
+          IconButton(onPressed: updateMyInfo, icon: const Icon(Icons.refresh)),
           IconButton(
             onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                clipBehavior: Clip.hardEdge,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16.0),
-                    topRight: Radius.circular(16.0),
-                  ),
-                ),
-                builder: (ctx) {
-                  return ChatRoomUIKitMembersView(
-                    roomId: widget.room.roomId,
-                    ownerId: widget.room.owner ?? '',
-                    controllers: [
-                      ChatRoomUIKitMembersController('成员列表'),
-                      ChatRoomUIKitMutesController('禁言列表'),
-                    ],
-                  );
-                },
+              chatroomShowMembersView(
+                context,
+                roomId: roomId,
+                ownerId: widget.room.owner!,
+                membersControllers: [
+                  ChatRoomUIKitMembersController('成员列表'),
+                  ChatRoomUIKitMutesController('禁言列表'),
+                ],
               );
             },
             icon: const Icon(Icons.card_membership),
@@ -89,14 +129,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
             right: 16,
             height: 84,
             bottom: 300,
-            child: ChatRoomShowGiftView(roomId: widget.room.roomId),
+            child: ChatRoomShowGiftView(roomId: roomId),
           ),
           Positioned(
             left: 16,
             right: 78,
             height: 204,
             bottom: 90,
-            child: ChatRoomMessagesView(roomId: widget.room.roomId),
+            child: ChatRoomMessagesView(roomId: roomId),
           ),
           Positioned(
             top: 0,
@@ -105,74 +145,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
             bottom: 0,
             child: SafeArea(
               child: ChatRoomInputBar(
-                inputHint: '请输入消息',
                 controller: inputBarController,
                 onSend: (msg) {
                   if (msg.trim().isEmpty) {
                     return;
                   }
                   ChatRoomUIKit.instance.sendMessage(
-                    message: ChatRoomMessage.roomMessage(
-                      widget.room.roomId,
-                      msg,
-                    ),
+                    message: ChatRoomMessage.roomMessage(roomId, msg),
                   );
                 },
                 actions: [
                   InkWell(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        clipBehavior: Clip.hardEdge,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16.0),
-                            topRight: Radius.circular(16.0),
-                          ),
-                        ),
-                        builder: (ctx) {
-                          return FutureBuilder(
-                            future: rootBundle.loadString('assets/Gifts.json'),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                Map<String, dynamic> map = json.decode(
-                                  snapshot.data!,
-                                );
-                                List<ChatroomGiftPageController> controllers =
-                                    [];
-                                for (var element in map.keys.toList()) {
-                                  final controller = ChatroomGiftPageController(
-                                    title: element,
-                                    gifts: () {
-                                      List<ChatRoomGift> list = [];
-                                      map[element].forEach((element) {
-                                        ChatRoomGift gift =
-                                            ChatRoomGift.fromJson(element);
-                                        list.add(gift);
-                                      });
-                                      return list;
-                                    }(),
-                                  );
-                                  controllers.add(controller);
-                                }
-                                return ChatRoomGiftsView(
-                                  giftControllers: controllers,
-                                  onSendTap: (gift) {
-                                    ChatRoomUIKit.instance.sendMessage(
-                                      message: ChatRoomMessage.giftMessage(
-                                        widget.room.roomId,
-                                        gift,
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else {
-                                return Container();
-                              }
-                            },
-                          );
-                        },
+                    onTap: () async {
+                      ChatRoomGift? gift = await chatroomShowGiftsView(
+                        context,
+                        giftControllers: controllers,
                       );
+                      if (gift != null) {
+                        ChatRoomUIKit.instance.sendMessage(
+                          message: ChatRoomMessage.giftMessage(roomId, gift),
+                        );
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(3),
@@ -190,7 +183,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
     content = PopScope(
       onPopInvokedWithResult: (didPop, result) async {
         ChatRoomUIKit.instance
-            .leaveChatRoom(widget.room.roomId)
+            .leaveChatRoom(roomId)
             .then((_) {
               debugPrint('leave chat room');
             })
@@ -200,8 +193,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
       },
       child: content,
     );
-
-    content = ChatRoomUserData(child: content);
 
     return content;
   }

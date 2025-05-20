@@ -1,7 +1,5 @@
 import 'package:em_chat_uikit/chat_uikit.dart';
-
 import 'package:flutter/material.dart';
-import 'package:test_uikit/demo/pages/conversation/msg_page.dart';
 
 class ConversationPage extends StatefulWidget {
   const ConversationPage({super.key});
@@ -24,13 +22,6 @@ class _ConversationPageState extends State<ConversationPage>
 
   @override
   Widget themeBuilder(BuildContext context, ChatUIKitTheme theme) {
-    return ConversationsView(
-      onItemTap: (context, info) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MessageWidget(info.profile)),
-        );
-      },
-    );
+    return ConversationsView();
   }
 }

@@ -110,11 +110,11 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: main
-      resolved-ref: "160f23ce531058bd78c56dbbeebcd1c157ccee1b"
+      ref: "5c6f7bb"
+      resolved-ref: "5c6f7bba19fde105d977778980188d09e751ce9f"
       url: "https://github.com/dujiepeng/chat_sdk_service.git"
     source: git
-    version: "4.13.0"
+    version: "4.13.0+1"
   chat_uikit_keyboard_panel:
     dependency: transitive
     description:
@@ -144,8 +144,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: fd3f5c1ab17c9378837c33a7f17ced0d33f4d1df
+      ref: cd22d48
+      resolved-ref: cd22d488fc5896d2c75d002e41017728f34a4c4a
       url: "https://github.com/dujiepeng/chat_room_uikit.git"
     source: git
     version: "2.0.0"
@@ -217,8 +217,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "213e65b"
-      resolved-ref: "213e65b09ee8c656677b45aaae35cdaaf1098952"
+      ref: be16f4e
+      resolved-ref: be16f4ecdc2d7fda61a202864b82ef6d1588ce35
       url: "https://github.com/dujiepeng/chatuikit-flutter.git"
     source: git
     version: "2.3.0-dev.1"
