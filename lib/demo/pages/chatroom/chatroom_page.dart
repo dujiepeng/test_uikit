@@ -105,6 +105,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> with ChatUIKitThemeMixin {
             bottom: 0,
             child: SafeArea(
               child: ChatRoomInputBar(
+                inputHint: '请输入消息',
                 controller: inputBarController,
                 onSend: (msg) {
                   if (msg.trim().isEmpty) {

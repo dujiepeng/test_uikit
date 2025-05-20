@@ -141,19 +141,6 @@ class _HomePageState extends State<HomePage>
           CustomBottomNavigationBarItem(
             label: 'Room',
             image: 'assets/chat/chat.png',
-            unreadCountWidget: ValueListenableBuilder(
-              valueListenable: unreadMessageCount,
-              builder: (context, value, child) {
-                return ChatUIKitBadge(
-                  value,
-                  textColor: theme.color.neutralColor98,
-                  backgroundColor:
-                      theme.color.isDark
-                          ? theme.color.errorColor6
-                          : theme.color.errorColor5,
-                );
-              },
-            ),
             borderColor:
                 theme.color.isDark
                     ? theme.color.neutralColor1
